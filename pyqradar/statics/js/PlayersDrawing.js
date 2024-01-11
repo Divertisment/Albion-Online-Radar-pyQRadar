@@ -71,7 +71,7 @@ export class PlayersDrawing extends DrawingUtils {
       for (const item of items) {
         itemString += item + " ";
 
-        const src = "/img/" + this.itemsInfo[item] + ".png";
+        const src = "https://render.albiononline.com/v1/item/" + this.itemsInfo[item];
         if (src.includes("undefined")) {
           continue;
         }

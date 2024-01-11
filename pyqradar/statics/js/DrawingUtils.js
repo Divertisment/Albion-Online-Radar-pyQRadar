@@ -64,7 +64,7 @@
       return;
     }
 
-    const src = "/img/" + drawTo + ".png";
+    const src = "https://render.albiononline.com/v1/item/" + drawTo;
 
     if (this.settings.images[src]) {
       ctx.drawImage(
