@@ -3,7 +3,7 @@ import signal
 import sys
 import threading
 
-from photon_packet_parser import PhotonPacketParser
+from pyqradar.utils.photon_packet_parser_mod import PhotonPacketParser
 
 from pyqradar.utils.flask import socketio
 from pyqradar.utils.logging import LoggerManager, logging
