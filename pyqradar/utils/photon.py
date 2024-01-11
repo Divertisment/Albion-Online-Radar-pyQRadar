@@ -44,7 +44,7 @@ class Photon:
             udp_payload = bytes(packet[UDP].payload)
 
             try:
-                self.parser.HandlePayload(udp_payload)
+                self.parser.handle_payload(udp_payload)
             except:
                 pass
 

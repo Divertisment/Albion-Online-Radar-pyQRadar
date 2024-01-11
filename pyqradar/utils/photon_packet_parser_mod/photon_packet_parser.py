@@ -17,13 +17,13 @@ class PhotonPacketParser:
         self.on_request = on_request
         self.on_response = on_response
 
-    def HandlePayload(self, payload):
+    def handle_payload(self, payload):
         payload = io.BytesIO(payload)
 
-        if (payload.getbuffer().nbytes < PHOTON_HEADER_LENGTH):
+        if payload.getbuffer().nbytes < PHOTON_HEADER_LENGTH:
             return
 
-        peerId = NumberSerializer.deserialize_short(payload)
+        peer_id = NumberSerializer.deserialize_short(payload)
         flags = ByteReader.read_byte(payload)[0]
         command_count = ByteReader.read_byte(payload)[0]
         timestamp = NumberSerializer.deserialize_int(payload)
@@ -31,10 +31,10 @@ class PhotonPacketParser:
         is_encrypted = flags == 1
         is_crc_enabled = flags == 0xCC
 
-        if (is_encrypted):
+        if is_encrypted:
             return
 
-        if (is_crc_enabled):
+        if is_crc_enabled:
             print("CRC is enabled")
             offset = payload.tell()
             payload.seek(0)
@@ -43,16 +43,16 @@ class PhotonPacketParser:
             payload.seek(offset)
             payload = NumberSerializer.serialize(0, payload)
 
-            if (crc != CrcCalculator.calculate(payload, payload.getbuffer().nbytes)):
+            if crc != CrcCalculator.calculate(payload, payload.getbuffer().nbytes):
                 return
 
         for _ in range(command_count):
-            self.HandleCommand(payload, command_count)
+            self.handle_command(payload, command_count)
 
-    def HandleCommand(self, source: io.BytesIO, command_count: int):
+    def handle_command(self, source: io.BytesIO, command_count: int):
         command_type = ByteReader.read_byte(source)
 
-        if len(command_type) == 0:
+        if not command_type:
             return
 
         command_type = command_type[0]
@@ -71,15 +71,15 @@ class PhotonPacketParser:
         elif command_type == CommandType.SendUnreliable.value:
             source.read(4)
             command_length -= 4
-            self.HandleSendReliable(source, command_length)
+            self.handle_send_reliable(source, command_length)
         elif command_type == CommandType.SendReliable.value:
-            self.HandleSendReliable(source, command_length)
+            self.handle_send_reliable(source, command_length)
         elif command_type == CommandType.SendFragment.value:
-            self.HandleSendFragment(source, command_length)
+            self.handle_send_fragment(source, command_length)
         else:
-            source.read(command_length)            
+            source.read(command_length)
 
-    def HandleSendReliable(self,  source: io.BytesIO, command_length: int):
+    def handle_send_reliable(self, source: io.BytesIO, command_length: int):
         source.read(1)
         command_length -= 1
         message_type = ByteReader.read_byte(source)[0]
@@ -97,10 +97,8 @@ class PhotonPacketParser:
         elif message_type == MessageType.Event.value:
             event_data = Protocol16Deserializer.deserialize_event_data(payload)
             self.on_event(event_data)
-        # else:
-        #     print("Unknown message type: ", message_type)
 
-    def HandleSendFragment(self, source: io.BytesIO, command_length: int):
+    def handle_send_fragment(self, source: io.BytesIO, command_length: int):
         sequence_number = NumberSerializer.deserialize_int(source)
         command_length -= 4
         fragment_count = NumberSerializer.deserialize_int(source)
@@ -114,9 +112,9 @@ class PhotonPacketParser:
 
         fragment_length = command_length
 
-        self.HandleSegmentedPayload(sequence_number, total_length, fragment_length, fragment_offset, source)
+        self.handle_segmented_payload(sequence_number, total_length, fragment_length, fragment_offset, source)
 
-    def GetSegmentedPackage(self, start_sequence_number, total_length):
+    def get_segmented_package(self, start_sequence_number, total_length):
         if start_sequence_number in self._pending_segments:
             return self._pending_segments[start_sequence_number]
 
@@ -125,9 +123,9 @@ class PhotonPacketParser:
         self._pending_segments[start_sequence_number] = segmented_package
 
         return segmented_package
- 
-    def HandleSegmentedPayload(self, start_sequence_number, total_length, fragment_length, fragment_offset, source):
-        segmented_package = self.GetSegmentedPackage(start_sequence_number, total_length)
+
+    def handle_segmented_payload(self, start_sequence_number, total_length, fragment_length, fragment_offset, source):
+        segmented_package = self.get_segmented_package(start_sequence_number, total_length)
 
         for i in range(fragment_length):
             segmented_package.total_payload[fragment_offset + i] = source.read(1)[0]
@@ -136,8 +134,8 @@ class PhotonPacketParser:
 
         if segmented_package.bytes_written >= segmented_package.total_length:
             self._pending_segments.pop(start_sequence_number)
-            self.HandleFinishedSegmentedPackage(segmented_package.total_payload)
+            self.handle_finished_segmented_package(segmented_package.total_payload)
 
-    def HandleFinishedSegmentedPackage(self, total_payload: bytearray):
+    def handle_finished_segmented_package(self, total_payload: bytearray):
         command_length = len(total_payload)
-        self.HandleSendReliable(io.BytesIO(total_payload), command_length)
+        self.handle_send_reliable(io.BytesIO(total_payload), command_length)

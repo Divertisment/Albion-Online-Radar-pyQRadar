@@ -103,7 +103,6 @@ class Protocol16Deserializer:
         buffer = input.read(8)
 
         if sys.byteorder == 'little':
-        #     # return struct.unpack('<l', buffer[0] << 56 | buffer[1] << 48 | buffer[2] << 40 | buffer[3] << 32 | buffer[4] << 24 | buffer[5] << 16 | buffer[6] << 8 | buffer[7])
             return struct.unpack('>q', buffer)[0]
 
         return struct.unpack('<q', buffer)[0]
@@ -113,13 +112,6 @@ class Protocol16Deserializer:
         buffer = input.read(4)
 
         if sys.byteorder == 'little':
-        #     # b0 = buffer[0]
-        #     # b1 = buffer[1]
-        #     # buffer[0] = buffer[3]
-        #     # buffer[1] = buffer[2]
-        #     # buffer[2] = b1
-        #     # buffer[3] = b0
-            # print(buffer)
 
             return struct.unpack('>f', buffer)[0]
 
@@ -130,19 +122,6 @@ class Protocol16Deserializer:
         buffer = input.read(8)
 
         if sys.byteorder == 'little':
-        #     # b0 = buffer[0]
-        #     # b1 = buffer[1]
-        #     # b2 = buffer[2]
-        #     # b3 = buffer[3]
-        #     # buffer[0] = buffer[7]
-        #     # buffer[1] = buffer[6]
-        #     # buffer[2] = buffer[5]
-        #     # buffer[3] = buffer[4]
-        #     # buffer[4] = b3
-        #     # buffer[5] = b2
-        #     # buffer[6] = b1
-        #     # buffer[7] = b0
-
             return struct.unpack('>d', buffer)[0]
 
         return struct.unpack('<d', buffer)[0]
